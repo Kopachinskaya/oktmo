@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Поручения</title>
+  <style>
+    #drop-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      width: 300px;
+      height: 150px;
+      margin: 20px auto;
+      text-align: center;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h2 style="text-align:center">Поручения субъектам РФ</h2>
+<div id="drop-area">
+  <p>Загрузить таблицу</p>
+</div>
+<div style="text-align:center; margin-top: 10px;">
+    <button id="download-btn" style="display:none;">Скачать таблицу</button>
+</div>
+
+<div id="tables-container"></div>
+
+<script>
+  const dropArea = document.getElementById('drop-area');
+  const downloadBtn = document.getElementById('download-btn');
+
+  dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.style.background = '#eef';
+  });
+
+  dropArea.addEventListener('dragleave', () => {
+    dropArea.style.background = '';
+  });
+
+  dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.style.background = '';
+    const file = e.dataTransfer.files[0];
+    uploadFile(file);
+  });
+
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+    } else {
+      document.getElementById('tables-container').innerHTML = '';
+      displayTable(data.dict1, 'Поручения субъектам');
+      displayTable(data.dict2, 'Поручения отсутствуют');
+      downloadBtn.style.display = 'inline-block';
+    }
+  }
+
+  function displayTable(obj, title) {
+    const container = document.getElementById('tables-container');
+    const table = document.createElement('table');
+    const caption = document.createElement('caption');
+    caption.textContent = title;
+    table.appendChild(caption);
+
+    for (const [key, value] of Object.entries(obj)) {
+      const row = table.insertRow();
+      row.insertCell().textContent = key;
+      row.insertCell().textContent = value;
+    }
+
+    container.appendChild(table);
+  }
+    downloadBtn.addEventListener('click', () => {
+    window.location.href = '/download-dict1';
+  });
+</script>
+
+</body>
+</html>
